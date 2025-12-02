@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galería de Fotos Sencilla</title>
+    <style>
+        /* Estilos básicos y de reseteo */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9f9; /* Fondo simple y claro */
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333; /* Color de texto oscuro */
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+
+        /* Estilos de la Galería (Grid) */
+        .gallery {
+            display: grid;
+            /* Grid simple y responsivo */
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 10px;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px; /* Menos redondeado */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra suave y sutil */
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background-color: white;
+            border: 1px solid #eee; /* Borde muy sutil */
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-2px); /* Efecto de elevación sutil */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15); /* Sombra un poco más marcada al pasar el ratón */
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-name {
+            padding: 10px 5px;
+            background: #ffffff;
+            color: #555;
+            font-size: 0.875rem;
+            text-align: center;
+            font-weight: 400;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        /* Estilos del Modal (Visor de imagen) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.85); /* Fondo negro semitransparente */
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            position: relative;
+            margin: auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 1000px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 5px;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+            transition: color 0.3s;
+        }
+
+        .close:hover {
+            color: #ddd;
+        }
+
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5); /* Fondo de botón simple */
+            color: white;
+            border: none;
+            font-size: 24px;
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 50%; /* Botones redondos */
+            transition: background 0.3s;
+            z-index: 1001;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            background: rgba(0,0,0,0.7);
+        }
+
+        .prev-btn {
+            left: 20px;
+        }
+
+        .next-btn {
+            right: 20px;
+        }
+
+        .error {
+            text-align: center;
+            color: #e74c3c;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            height: 250px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.5;
+            flex-direction: column;
+        }
+
+        /* Media Queries para móviles */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 10px;
+            }
+
+            .gallery-item img {
+                height: 150px;
+            }
+
+            .error {
+                height: 150px;
+            }
+
+            .nav-btn {
+                font-size: 20px;
+                padding: 10px;
+                width: 40px;
+                height: 40px;
+            }
+
+            .prev-btn {
+                left: 10px;
+            }
+
+            .next-btn {
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Galería Sencilla (9 Elementos)</h1>
+        <div id="gallery" class="gallery"></div>
+    </div>
+
+    <div id="modal" class="modal">
+        <!-- Botón de cerrar -->
+        <span class="close" aria-label="Cerrar">&times;</span>
+        
+        <!-- Botón de navegación anterior -->
+        <button class="nav-btn prev-btn" aria-label="Anterior">&#10094;</button>
+        
+        <div class="modal-content">
+            <img id="modal-img" src="" alt="Imagen en vista previa">
+        </div>
+        
+        <!-- Botón de navegación siguiente -->
+        <button class="nav-btn next-btn" aria-label="Siguiente">&#10095;</button>
+    </div>
+
+    <script>
+        // Lista de 18 archivos de imagen (1.jpg a 18.jpg)
+        const imageFiles = [
+            '1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg', 
+            '7.jpg', '8.jpg', '9.jpg'
+        ];
+
+        let currentIndex = 0;
+        const gallery = document.getElementById('gallery');
+        const modal = document.getElementById('modal');
+        const modalImg = document.getElementById('modal-img');
+        const closeBtn = document.querySelector('.close');
+        const prevBtn = document.querySelector('.prev-btn');
+        const nextBtn = document.querySelector('.next-btn');
+
+        /**
+         * Carga y renderiza los elementos de la galería.
+         */
+        function loadGallery() {
+            gallery.innerHTML = '';
+            
+            imageFiles.forEach((filename, index) => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                
+                const img = document.createElement('img');
+                img.src = `images/${filename}`; 
+                img.alt = `Foto ${index + 1}: ${filename}`;
+                
+                // Manejo de error si la imagen no se carga
+                img.onerror = function() {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error';
+                    errorDiv.innerHTML = `❌ Error de Carga<br><strong>${filename}</strong>`;
+                    item.innerHTML = '';
+                    item.appendChild(errorDiv);
+                };
+                
+                const name = document.createElement('div');
+                name.className = 'image-name';
+                name.textContent = `Foto ${index + 1}`;
+                
+                item.appendChild(img);
+                item.appendChild(name);
+                item.addEventListener('click', () => openModal(index));
+                
+                gallery.appendChild(item);
+            });
+        }
+
+        /**
+         * Abre el modal y muestra la imagen en el índice dado.
+         * @param {number} index - El índice de la imagen a mostrar.
+         */
+        function openModal(index) {
+            currentIndex = index;
+            modal.style.display = 'block';
+            modalImg.src = `images/${imageFiles[currentIndex]}`;
+            // Previene el desplazamiento del cuerpo mientras el modal está abierto
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        /**
+         * Cierra el modal.
+         */
+        function closeModal() {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        /**
+         * Navega a la siguiente imagen.
+         */
+        function nextImage() {
+            currentIndex = (currentIndex + 1) % imageFiles.length;
+            modalImg.src = `images/${imageFiles[currentIndex]}`;
+        }
+
+        /**
+         * Navega a la imagen anterior.
+         */
+        function prevImage() {
+            currentIndex = (currentIndex - 1 + imageFiles.length) % imageFiles.length;
+            modalImg.src = `images/${imageFiles[currentIndex]}`;
+        }
+
+        // Eventos de botones
+        closeBtn.addEventListener('click', closeModal);
+        nextBtn.addEventListener('click', nextImage);
+        prevBtn.addEventListener('click', prevImage);
+
+        // Cierre del modal al hacer clic en el fondo oscuro
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Eventos de teclado para navegación y cierre
+        document.addEventListener('keydown', (e) => {
+            if (modal.style.display === 'block') {
+                if (e.key === 'ArrowRight') nextImage();
+                if (e.key === 'ArrowLeft') prevImage();
+                if (e.key === 'Escape') closeModal();
+            }
+        });
+
+        // Soporte para gestos táctiles (Swipe)
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        modal.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        modal.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const minSwipeDistance = 50;
+            if (touchEndX < touchStartX - minSwipeDistance) nextImage(); // Deslizar a la izquierda para siguiente
+            if (touchEndX > touchStartX + minSwipeDistance) prevImage(); // Deslizar a la derecha para anterior
+        }
+
+        // Inicializar la galería al cargar
+        loadGallery();
+    </script>
+</body>
+</html>
